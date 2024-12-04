@@ -25,6 +25,7 @@ const server = http.createServer((request, response)=> {
 
     //só execura quando todos os dados da requisição foram recebidos
     request.on('end', ()=> {
+        const id = url.split('/')[2];
 
         //se a url da requisição tiver em /grades com metodo POST
         if (url==="/grades" && method == 'GET') {
@@ -42,6 +43,35 @@ const server = http.createServer((request, response)=> {
 
         response.writeHead(201, {'Content-Type': 'application/json'}) //201 (que significa "Criado")
         response.end(JSON.stringify(newGrade)) //Envia a nova nota criada de volta ao cliente como uma resposta no formato JSON.
+    }
+    // /grades/ serve para poder selecionar todos
+    else if (url.startsWith("/grades/") && method === "PUT") {
+        const {studentName, subject, grade} = JSON.parse(body)
+        const gradeToUpdate = grades.find(g=> g.id === id)
+
+        if (gradeToUpdate) {
+            gradeToUpdate.studentName = studentName;
+            gradeToUpdate.subject = subject;
+            gradeToUpdate.grade = grade;
+            response.writeHead(200, { "Content-Type": "application/json" });
+            response.end(JSON.stringify(gradeToUpdate));
+        } else {
+            response.writeHead(404, { "Content-Type": "application/json" });
+            response.end(JSON.stringify({ message: "Grade not found" }));
+        }
+    }
+    //deletar
+    else if(url.startsWith("/grades/") && method === "DELETE") {
+        const index = grades.findIndex(g=> g.id === id)
+
+        if (index !== -1) {
+            grades.splice(index, 1);
+            response.writeHead(204);
+            response.end();
+          } else {
+            response.writeHead(404, { "Content-Type": "application/json" });
+            response.end(JSON.stringify({ message: "Grade not found" }));
+          }
     }
     
     //Tratando rotas não encontradas (404):
